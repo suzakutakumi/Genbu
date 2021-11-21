@@ -3,9 +3,11 @@ function isDigit(char) {
   return '0'.charCodeAt(0) <= charCode && charCode <= '9'.charCodeAt(0)
 }
 
-function isIdentChar(char) {
+function isIdent(char) {
   const charCode = char.charCodeAt(0)
-  return 'a'.charCodeAt(0) <= charCode && charCode <= 'z'.charCodeAt(0)
+  return ('a'.charCodeAt(0) <= charCode && charCode <= 'z'.charCodeAt(0))
+    || ('A'.charCodeAt(0) <= charCode && charCode <= 'Z'.charCodeAt(0))
+    || charCode === '_'.charCodeAt(0)
 }
 
 function countDigits(source) {
@@ -19,10 +21,10 @@ function countDigits(source) {
   return readPosition
 }
 
-function countIdentChars(source) {
+function countIdent(source) {
   let readPosition = 0
   while (readPosition < source.length) {
-    if (!isIdentChar(source[readPosition])) {
+    if (!isIdent(source[readPosition])&&!isDigit(source[readPosition])) {
       return readPosition
     }
     readPosition += 1
@@ -96,10 +98,15 @@ module.exports.lexicalAnalyse = function (source) {
             value: parseInt(source.slice(readPosition, readPosition + digitsCount), 10),
           })
           readPosition += digitsCount
-        } else if (isIdentChar(source[readPosition])) {
-          const identCharsCount = countIdentChars(source.slice(readPosition))
-          const name = source.slice(readPosition, readPosition + identCharsCount)
+        } else if (isIdent(source[readPosition])) {
+          const identCount = countIdent(source.slice(readPosition))
+          const name = source.slice(readPosition, readPosition + identCount)
           switch (name) {
+            case 'exit':
+              tokens.push({
+                type: 'Exit',
+              })
+              break
             case 'if':
               tokens.push({
                 type: 'If',
@@ -128,7 +135,7 @@ module.exports.lexicalAnalyse = function (source) {
                 name,
               })
           }
-          readPosition += identCharsCount
+          readPosition += identCount
         } else {
           // 不明な文字
           tokens.push({

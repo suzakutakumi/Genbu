@@ -24,7 +24,7 @@ function countDigits(source) {
 function countIdent(source) {
   let readPosition = 0
   while (readPosition < source.length) {
-    if (!isIdent(source[readPosition])&&!isDigit(source[readPosition])) {
+    if (!isIdent(source[readPosition]) && !isDigit(source[readPosition])) {
       return readPosition
     }
     readPosition += 1
@@ -35,17 +35,17 @@ function countIdent(source) {
 module.exports.lexicalAnalyse = function (source) {
   const tokens = []
   let readPosition = 0
-  const sourceLen=source.length
+  const sourceLen = source.length
   while (readPosition < sourceLen) {
     switch (source[readPosition]) {
       case '=':
-        if (readPosition + 1 < sourceLen && source[readPosition + 1] == '=') {
+        if (source[readPosition + 1] === '=') {
           tokens.push({ type: 'EqualEqual' })
-          readPosition += 1
+          readPosition += 2
         } else {
           tokens.push({ type: 'Equal' })
+          readPosition += 1
         }
-        readPosition += 1
         break
       case '+':
         tokens.push({ type: 'Plus' })

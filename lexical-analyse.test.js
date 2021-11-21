@@ -56,6 +56,15 @@ describe('字句解析', () => {
   test('セミコロン', () => {
     expect(lexicalAnalyse(';')).toStrictEqual([{ type: 'Semicolon' }])
   })
+  test('等号', () => {
+    expect(lexicalAnalyse('==')).toStrictEqual([{ type: 'EqualEqual' }])
+  })
+  test('引き算', () => {
+    expect(lexicalAnalyse('-')).toStrictEqual([{ type: 'Minus' }])
+  })
+  test('掛け算', () => {
+    expect(lexicalAnalyse('*')).toStrictEqual([{ type: 'Multi' }])
+  })
   describe('キーワード', () => {
     test('構文用のキーワード', () => {
       expect(lexicalAnalyse('if def')).toStrictEqual([

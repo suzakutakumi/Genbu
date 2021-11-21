@@ -79,6 +79,16 @@ describe('評価', () => {
       expect(evaluate(lexAndParse('1+(non+23);'), emptyEnvironment).error.type).toBe('TypeError')
     })
   })
+  describe('引き算', () => {
+    test('1-2;', () => {
+      expect(evaluate(lexAndParse('1-2;'), emptyEnvironment)).toStrictEqual(
+        {
+          result: intValue(-1),
+          environment: emptyEnvironment,
+        },
+      )
+    })
+  })
   test('複数の文', () => {
     expect(evaluate(lexAndParse('1;2;'), emptyEnvironment)).toStrictEqual(
       {

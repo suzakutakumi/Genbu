@@ -65,7 +65,7 @@ function parseCommaSeparatedExpressions(tokens) {
   const {
     expression: firstExpression,
     parsedTokensCount: firstParsedTokensCount,
-  // eslint-disable-next-line no-use-before-define
+    // eslint-disable-next-line no-use-before-define
   } = parseExpression(tokens)
   if (firstExpression === null) {
     return {
@@ -120,7 +120,7 @@ function parseFunctionCallingExpression(tokens) {
 // 引き算は勉強会中で機能追加をする
 function parseAddSubExpression(tokens) {
   let { expression: left, parsedTokensCount: readPosition } = parseFunctionCallingExpression(tokens)
-  while (tokens[readPosition]?.type === 'Plus') {
+  while (tokens[readPosition]?.type === 'Plus' || tokens[readPosition]?.type === 'Minus') {
     const {
       expression: right,
       parsedTokensCount: rightTokensCount,
@@ -128,7 +128,13 @@ function parseAddSubExpression(tokens) {
     if (right === null) {
       return { expression: null }
     }
-    left = { type: 'Add', left, right }
+    if (tokens[readPosition]?.type === 'Plus') {
+      left = { type: 'Add', left, right }
+    }
+
+    if (tokens[readPosition]?.type === 'Minus') {
+      left = { type: 'Sub', left, right }
+    }
     readPosition += rightTokensCount + 1
   }
   return { expression: left, parsedTokensCount: readPosition }
@@ -155,7 +161,7 @@ function parseBlock(tokens) {
     const {
       statement: stmt,
       parsedTokensCount,
-    // eslint-disable-next-line no-use-before-define
+      // eslint-disable-next-line no-use-before-define
     } = parseStatement(tokens.slice(readPosition))
     if (stmt === null) {
       return { statements: null }

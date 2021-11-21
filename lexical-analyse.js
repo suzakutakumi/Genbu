@@ -35,10 +35,16 @@ function countIdent(source) {
 module.exports.lexicalAnalyse = function (source) {
   const tokens = []
   let readPosition = 0
-  while (readPosition < source.length) {
+  const sourceLen=source.length
+  while (readPosition < sourceLen) {
     switch (source[readPosition]) {
       case '=':
-        tokens.push({ type: 'Equal' })
+        if (readPosition + 1 < sourceLen && source[readPosition + 1] == '=') {
+          tokens.push({ type: 'EqualEqual' })
+          readPosition += 1
+        } else {
+          tokens.push({ type: 'Equal' })
+        }
         readPosition += 1
         break
       case '+':

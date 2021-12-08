@@ -1,4 +1,6 @@
-const { intValue, nullValue, boolValue } = require('./value')
+const {
+  intValue, stringValue, nullValue, boolValue,
+} = require('./value')
 
 function evaluatorError(ast) {
   return {
@@ -10,11 +12,15 @@ function evaluatorError(ast) {
   }
 }
 
-function typeError(type) {
+function typeError(type, msg = null) {
+  let value = msg
+  if (value === null) {
+    value = `無効な型'${type}'が渡されました`
+  }
   return {
     error: {
       type: 'TypeError',
-      message: `無効な型'${type}'が渡されました`,
+      message: msg,
     },
   }
 }
@@ -60,6 +66,7 @@ function evaluateIfStatement(ast, initialEnvironment) {
 
 // 足し算の評価をする
 function evaluateAdd(ast, environment) {
+  const valueType = ['IntValue', 'StringValue']
   const {
     result: leftResult,
     error: leftError,
@@ -69,8 +76,8 @@ function evaluateAdd(ast, environment) {
   if (leftError) {
     return { error: leftError, environment }
   }
-  if (leftResult.type !== 'IntValue') {
-    return typeError(leftResult.type, environment)
+  if (!valueType.includes(leftResult.type)) {
+    return typeError(leftResult.type)
   }
   const {
     result: rightResult,
@@ -81,11 +88,27 @@ function evaluateAdd(ast, environment) {
   if (rightError) {
     return { error: rightError, environment: rightEnvironment }
   }
-  if (rightResult.type !== 'IntValue') {
-    return typeError(rightResult.type, environment)
+  if (!valueType.includes(rightResult.type)) {
+    return typeError(rightResult.type)
   }
+
+  if (leftResult.type !== rightResult.type) {
+    return typeError(rightResult.type, `型が一致しません:\n ${leftResult.type}\n ${rightResult.type}`)
+  }
+  let value
+  switch (leftResult.type) {
+    case 'IntValue':
+      value = intValue(leftResult.value + rightResult.value)
+      break
+    case 'StringValue':
+      value = stringValue(leftResult.value + rightResult.value)
+      break
+    default:
+      return typeError(leftResult.type)
+  }
+
   return {
-    result: intValue(leftResult.value + rightResult.value),
+    result: value,
     environment: rightEnvironment,
   }
 }
@@ -95,6 +118,7 @@ function unwrapObject(obj) {
   switch (obj.type) {
     case 'IntValue':
     case 'BoolValue':
+    case 'StringValue':
       return obj.value
     case 'NullValue':
       return null
@@ -160,7 +184,7 @@ function evaluateArguments(args, environment) {
   for (const stmt of args) {
     const {
       result: argResult, error: argError, environment: argEnvironment,
-    // eslint-disable-next-line no-use-before-define
+      // eslint-disable-next-line no-use-before-define
     } = evaluate(stmt, argumentsEvaluatedEnvironment)
     if (argError) {
       return {
@@ -288,6 +312,11 @@ function evaluate(ast, environment) {
     case 'IntLiteral':
       return {
         result: intValue(ast.value),
+        environment,
+      }
+    case 'StringLiteral':
+      return {
+        result: stringValue(ast.value),
         environment,
       }
     case 'BoolLiteral':

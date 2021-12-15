@@ -38,6 +38,29 @@ module.exports.lexicalAnalyse = function (source) {
   const sourceLen = source.length
   while (readPosition < sourceLen) {
     switch (source[readPosition]) {
+      case '#':
+        readPosition += 1
+        if (source[readPosition] === '<') {
+          readPosition += 1
+          while (readPosition < source.length && source[readPosition] !== '>') {
+            if (source[readPosition] === '\\') {
+              readPosition += 1
+            }
+            readPosition += 1
+          }
+          if (readPosition >= source.length) {
+            tokens.push({
+              type: 'Error',
+              value: 'コメントの終わりがねえぞ',
+            })
+          }
+        } else {
+          while (readPosition < source.length && source[readPosition] !== '\n') {
+            readPosition += 1
+          }
+        }
+        readPosition += 1
+        break
       case '=':
         if (source[readPosition + 1] === '=') {
           tokens.push({ type: 'EqualEqual' })
@@ -91,6 +114,46 @@ module.exports.lexicalAnalyse = function (source) {
         tokens.push({ type: 'Semicolon' })
         readPosition += 1
         break
+      case '"': {
+        readPosition += 1
+        let currentPos = readPosition
+        let str = ''
+        while (currentPos < source.length && source[currentPos] !== '"') {
+          if (source[currentPos] === '\\') {
+            str += source.slice(readPosition, currentPos)
+            currentPos += 1
+            switch (source[currentPos]) {
+              case 't':
+                str += '\t'
+                break
+              case 'n':
+                str += '\n'
+                break
+              case '\\':
+                str += '\\'
+                break
+              default:
+                str += source[currentPos]
+            }
+            readPosition = currentPos + 1
+          }
+          currentPos += 1
+        }
+        if (source[currentPos] !== '"') {
+          tokens.push({
+            type: 'Error',
+            value: '文字列の終わりがねえぞ',
+          })
+        } else {
+          str += source.slice(readPosition, currentPos)
+          readPosition = currentPos + 1
+          tokens.push({
+            type: 'String',
+            value: str,
+          })
+        }
+        break
+      }
       case ' ':
       case '\t':
       case '\n':

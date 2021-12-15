@@ -9,6 +9,13 @@ exports.intValue = function (value) {
   }
 }
 
+exports.stringValue = function (value) {
+  return {
+    type: 'StringValue',
+    value,
+  }
+}
+
 exports.boolValue = function (value) {
   return {
     type: 'BoolValue',

@@ -10,6 +10,14 @@ function parseLiteral(tokens) {
         },
         parsedTokensCount: 1,
       }
+    case 'String':
+      return {
+        expression: {
+          type: 'StringLiteral',
+          value: head.value,
+        },
+        parsedTokensCount: 1,
+      }
     case 'Bool':
       return {
         expression: {

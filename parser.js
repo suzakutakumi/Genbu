@@ -124,15 +124,59 @@ function parseFunctionCallingExpression(tokens) {
   }
 }
 
+// 単項演算子
+function parseUnaryExpression(tokens) {
+  let content; let readPosition
+  if (tokens[0]?.type === 'Minus') {
+    const {
+      expression: right,
+      parsedTokensCount: position,
+    } = parseFunctionCallingExpression(tokens.slice(1))
+    content = { type: 'UnaryMinus', right }
+    readPosition = position + 1
+  } else {
+    const {
+      expression: right,
+      parsedTokensCount: position,
+    } = parseFunctionCallingExpression(tokens)
+    content = right
+    readPosition = position
+  }
+  return { expression: content, parsedTokensCount: readPosition }
+}
+
+// 掛け算と割り算の構文解析
+function parseMulDivExpression(tokens) {
+  let { expression: left, parsedTokensCount: readPosition } = parseUnaryExpression(tokens)
+  while (tokens[readPosition]?.type === 'Multi' || tokens[readPosition]?.type === 'Div') {
+    const {
+      expression: right,
+      parsedTokensCount: rightTokensCount,
+    } = parseUnaryExpression(tokens.slice(readPosition + 1))
+    if (right === null) {
+      return { expression: null }
+    }
+    if (tokens[readPosition]?.type === 'Multi') {
+      left = { type: 'Product', left, right }
+    }
+
+    if (tokens[readPosition]?.type === 'Div') {
+      left = { type: 'Quotient', left, right }
+    }
+    readPosition += rightTokensCount + 1
+  }
+  return { expression: left, parsedTokensCount: readPosition }
+}
+
 // 足し算と引き算の構文解析
 // 引き算は勉強会中で機能追加をする
 function parseAddSubExpression(tokens) {
-  let { expression: left, parsedTokensCount: readPosition } = parseFunctionCallingExpression(tokens)
+  let { expression: left, parsedTokensCount: readPosition } = parseMulDivExpression(tokens)
   while (tokens[readPosition]?.type === 'Plus' || tokens[readPosition]?.type === 'Minus') {
     const {
       expression: right,
       parsedTokensCount: rightTokensCount,
-    } = parseFunctionCallingExpression(tokens.slice(readPosition + 1))
+    } = parseMulDivExpression(tokens.slice(readPosition + 1))
     if (right === null) {
       return { expression: null }
     }
@@ -183,12 +227,35 @@ function parseBlock(tokens) {
   }
 }
 
+// Else文の構文解析
+// `else{ stmt1; stmt2; }` のようなものを解析する
+function parseElseStatement(tokens) {
+  if (tokens[0]?.type !== 'Else') {
+    return { ElseStatement: null }
+  }
+  const {
+    statements,
+    parsedTokensCount: parsedBlockTokensCount,
+  } = parseBlock(tokens.slice(1))
+  if (!statements) {
+    return { ElseStatement: null }
+  }
+  return {
+    ElseStatement: {
+      type: 'Else',
+      statements,
+    },
+    parsedTokensCount: parsedBlockTokensCount + 3,
+  }
+}
+
 // if文の構文解析
 // `if(cond) { stmt1; stmt2; }` のようなものを解析する
 function parseIfStatement(tokens) {
   if (tokens[0]?.type !== 'If' || tokens[1]?.type !== 'LParen') {
     return { ifStatement: null }
   }
+  let readPosition = 0
   const {
     expression: condition,
     parsedTokensCount: parsedExpressionTokensCount,
@@ -198,6 +265,8 @@ function parseIfStatement(tokens) {
     || tokens[parsedExpressionTokensCount + 2]?.type !== 'RParen') {
     return { ifStatement: null }
   }
+  readPosition += parsedExpressionTokensCount
+
   const {
     statements,
     parsedTokensCount: parsedBlockTokensCount,
@@ -205,13 +274,21 @@ function parseIfStatement(tokens) {
   if (!statements) {
     return { ifStatement: null }
   }
+
+  readPosition += parsedBlockTokensCount
+  const {
+    ElseStatement,
+    parsedTokensCount: tokensCount,
+  } = parseElseStatement(tokens.slice(parsedExpressionTokensCount + parsedBlockTokensCount + 3))
+  readPosition += tokensCount
   return {
     ifStatement: {
       type: 'If',
       condition,
       statements,
+      ElseStatement,
     },
-    parsedTokensCount: parsedExpressionTokensCount + parsedBlockTokensCount + 3,
+    parsedTokensCount: readPosition + 3,
   }
 }
 

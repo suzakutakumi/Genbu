@@ -43,9 +43,16 @@ function undefinedFunctionError(name) {
   }
 }
 
+// Else文の評価をする
+function evaluateElseStatement(ast, initialEnvironment) {
+  const { statements } = ast
+  // eslint-disable-next-line no-use-before-define
+  return evaluateMultiAST(statements, initialEnvironment)
+}
+
 // if文の評価をする
 function evaluateIfStatement(ast, initialEnvironment) {
-  const { condition, statements } = ast
+  const { condition, statements, ElseStatement } = ast
   // eslint-disable-next-line no-use-before-define
   const { result, error, environment: halfwayEnvironment } = evaluate(condition, initialEnvironment)
   if (error) {
@@ -55,6 +62,9 @@ function evaluateIfStatement(ast, initialEnvironment) {
     }
   }
   if ((result.type === 'BoolValue' && result.value === false) || result.type === 'NullValue') {
+    if (ElseStatement) {
+      return evaluateElseStatement(ElseStatement, initialEnvironment)
+    }
     return {
       result: nullValue,
       environment: halfwayEnvironment,
